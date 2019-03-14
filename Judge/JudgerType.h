@@ -1,4 +1,4 @@
 #pragma once
 
-//璇勬祴鏈虹被鍨嬶細鏅�歰r姣旇禌
+//评测机类型：普通or比赛
 //#define JUDGE_CONTEST
