@@ -95,7 +95,7 @@ void Judge(JudgeSystem_t &JudgeSystem, int RunID, const char *UserName, const ch
 	if (JudgeRes == Running)
 	{
 		fprintf(stdout, "Accepted, 耗时：%d, 代码长度:%d\n\n", TrueTime, JudgeSystem.GetCodeLen());
-		MySQL_ChangeStatus(RunID, "Accepted");
+		MySQL_ChangeStatus(RunID, ProgramStateStr[Accepted]);
 	}
 	else
 	{
@@ -165,7 +165,7 @@ void getFiles(const char *path, priority_queue<FileData_t> &files)
 
 				files.push(item);
 
-				MySQL_ChangeStatus(item.RunID, "Queuing");
+				MySQL_ChangeStatus(item.RunID, ProgramStateStr[Queuing]);
 			}
 		} while (_findnext(hFile, &fileinfo) == 0);
 

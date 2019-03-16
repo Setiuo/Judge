@@ -110,7 +110,7 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 	if (!this->HaveCompile)
 	{
 		this->JudgeStatus = Compiling;
-		MySQL_ChangeStatus(RunID, "Compiling");
+		MySQL_ChangeStatus(RunID, ProgramStateStr[Compiling]);
 
 		this->CreateDir(RunID);
 
@@ -120,7 +120,7 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 			{
 				this->HaveCompile = true;
 				this->JudgeStatus = Running;
-				MySQL_ChangeStatus(RunID, "Running");
+				MySQL_ChangeStatus(RunID, ProgramStateStr[Running]);
 			}
 			else
 			{
@@ -129,7 +129,7 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 				if (this->JudgeStatus == Compiling)
 				{
 					this->JudgeStatus = CompileError;
-					MySQL_ChangeStatus(RunID, "Compile Error");
+					MySQL_ChangeStatus(RunID, ProgramStateStr[CompileError]);
 				}
 
 			}
@@ -140,7 +140,7 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 			{
 				this->HaveCompile = true;
 				this->JudgeStatus = Running;
-				MySQL_ChangeStatus(RunID, "Running");
+				MySQL_ChangeStatus(RunID, ProgramStateStr[Running]);
 			}
 			else
 			{
@@ -149,7 +149,7 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 				if (this->JudgeStatus == Compiling)
 				{
 					this->JudgeStatus = CompileError;
-					MySQL_ChangeStatus(RunID, "Compile Error");
+					MySQL_ChangeStatus(RunID, ProgramStateStr[CompileError]);
 				}
 
 			}
@@ -602,7 +602,7 @@ void JudgeSystem_t::Judge(int RunID, const char *Problem, int TestID, DWORD &exi
 	{
 		this->status = SystemError;
 		this->JudgeStatus = SystemError;
-		MySQL_ChangeStatus(RunID, "System Error");
+		MySQL_ChangeStatus(RunID, ProgramStateStr[SystemError]);
 	}
 
 	CloseHandle(cmdOutput);
