@@ -237,6 +237,11 @@ int main()
 				sprintf_s(Path1, "Temporary_Code\\%d", RunID);
 				sprintf_s(Path2, "test\\%d\\Main.java", RunID);
 			}
+			else if (!strcmp(Lang, "Python"))
+			{
+				sprintf_s(Path1, "Temporary_Code\\%d", RunID);
+				sprintf_s(Path2, "test\\%d\\Code.py", RunID);
+			}
 			else
 			{
 				sprintf_s(Path1, "Temporary_Code\\%d", RunID);

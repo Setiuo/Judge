@@ -107,6 +107,7 @@ bool JudgeSystem_t::CheckCode(int RunID)
 }
 int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD &exitcode, int &Time, int &Memory)
 {
+
 	if (!this->HaveCompile)
 	{
 		this->JudgeStatus = Compiling;
@@ -133,6 +134,14 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 				}
 
 			}
+		}
+		else if (!strcmp(GettLanguage(), "Python"))
+		{
+			this->HaveCompile = true;
+			this->status = Running;
+			this->JudgeStatus = Running;
+
+			MySQL_ChangeStatus(RunID, ProgramStateStr[Running]);
 		}
 		else
 		{
@@ -498,6 +507,10 @@ void JudgeSystem_t::Judge(int RunID, const char *Problem, int TestID, DWORD &exi
 	if (!strcmp(GettLanguage(), "Java"))
 	{
 		sprintf_s(ExePath, "\"java\" -cp \"test\\%d\" \"Main\"", RunID);
+	}
+	else if (!strcmp(GettLanguage(), "Python"))
+	{
+		sprintf_s(ExePath, "\"python\" \"test\\%d\\Code.py\"", RunID);
 	}
 	else
 	{
