@@ -60,6 +60,7 @@ private:
 private:
 	bool CheckCode_C(int RunID);
 	bool CheckCode_Java(int RunID);
+	bool CheckCode_Python(int RunID);
 	bool AcceptedTest(const char* program, const char* tester);
 	bool PresentationErrorTest(const char* program, const char* tester);
 	bool OutputLimitExceededTest(const char* program, const char* tester);

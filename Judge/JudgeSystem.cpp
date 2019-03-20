@@ -60,13 +60,59 @@ int JudgeSystem_t::GetStatus(bool type = false)
 		return this->JudgeStatus;
 }
 
+bool JudgeSystem_t::CheckCode_Python(int RunID)
+{
+	bool PassStatus = true;
+
+	char CodePath[PathLen];
+	sprintf_s(CodePath, "test\\%d\\Code.py", RunID);
+	const string SensitiveStr[] = { "system", "popen", "remove", "open"};
+	int SensitiveStrNum = sizeof(SensitiveStr) / sizeof(SensitiveStr[0]);
+	string Code;
+
+	ifstream infile;
+	infile.open(CodePath);
+	string Str;
+
+	while (getline(infile, Str))
+	{
+		for (int i = 0; i < SensitiveStrNum; i++)
+		{
+			if (Str.find(SensitiveStr[i]) != string::npos)
+			{
+				PassStatus = false;
+				this->status = CompileError;
+
+				sprintf_s(CodePath, "Temporary_Error\\%d.log", RunID);
+				ofstream out(CodePath);
+				if (out.is_open())
+				{
+					out << "检测到敏感词: " << SensitiveStr[i].c_str() << endl;
+					out << "编译已终止，请删去敏感词再进行操作.";
+					out.close();
+				}
+
+				break;
+			}
+		}
+
+		if (!PassStatus)
+		{
+			break;
+		}
+	}
+	infile.close();
+
+	return PassStatus;
+}
+
 bool JudgeSystem_t::CheckCode_Java(int RunID)
 {
 	bool PassStatus = true;
 
 	char CodePath[PathLen];
 	sprintf_s(CodePath, "test\\%d\\Main.java", RunID);
-	const string SensitiveStr[] = { "getRuntime", "JFrame"};
+	const string SensitiveStr[] = { "getRuntime", "JFrame", "deleteFile", "deleteDirectory", "createNewFile"};
 	int SensitiveStrNum = sizeof(SensitiveStr) / sizeof(SensitiveStr[0]);
 	string Code;
 
@@ -183,11 +229,25 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 		}
 		else if (!strcmp(GettLanguage(), "Python"))
 		{
-			this->HaveCompile = true;
-			this->status = Running;
-			this->JudgeStatus = Running;
+			if (this->CheckCode_Python(RunID))
+			{
+				this->HaveCompile = true;
+				this->status = Running;
+				this->JudgeStatus = Running;
 
-			MySQL_ChangeStatus(RunID, ProgramStateStr[Running]);
+				MySQL_ChangeStatus(RunID, ProgramStateStr[Running]);
+			}
+			else
+			{
+				this->HaveCompile = false;
+
+				if (this->JudgeStatus == Compiling)
+				{
+					this->JudgeStatus = CompileError;
+					MySQL_ChangeStatus(RunID, ProgramStateStr[CompileError]);
+				}
+
+			}
 		}
 		else
 		{
