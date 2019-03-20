@@ -58,7 +58,8 @@ private:
 
 	bool HaveCompile;
 private:
-	bool CheckCode(int RunID);
+	bool CheckCode_C(int RunID);
+	bool CheckCode_Java(int RunID);
 	bool AcceptedTest(const char* program, const char* tester);
 	bool PresentationErrorTest(const char* program, const char* tester);
 	bool OutputLimitExceededTest(const char* program, const char* tester);

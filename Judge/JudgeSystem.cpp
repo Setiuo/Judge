@@ -60,7 +60,53 @@ int JudgeSystem_t::GetStatus(bool type = false)
 		return this->JudgeStatus;
 }
 
-bool JudgeSystem_t::CheckCode(int RunID)
+bool JudgeSystem_t::CheckCode_Java(int RunID)
+{
+	bool PassStatus = true;
+
+	char CodePath[PathLen];
+	sprintf_s(CodePath, "test\\%d\\Main.java", RunID);
+	const string SensitiveStr[] = { "getRuntime", "JFrame"};
+	int SensitiveStrNum = sizeof(SensitiveStr) / sizeof(SensitiveStr[0]);
+	string Code;
+
+	ifstream infile;
+	infile.open(CodePath);
+	string Str;
+
+	while (getline(infile, Str))
+	{
+		for (int i = 0; i < SensitiveStrNum; i++)
+		{
+			if (Str.find(SensitiveStr[i]) != string::npos)
+			{
+				PassStatus = false;
+				this->status = CompileError;
+
+				sprintf_s(CodePath, "Temporary_Error\\%d.log", RunID);
+				ofstream out(CodePath);
+				if (out.is_open())
+				{
+					out << "检测到敏感词: "<< SensitiveStr[i].c_str() << endl;
+					out << "编译已终止，请删去敏感词再进行操作.";
+					out.close();
+				}
+
+				break;
+			}
+		}
+
+		if (!PassStatus)
+		{
+			break;
+		}
+	}
+	infile.close();
+
+	return PassStatus;
+}
+
+bool JudgeSystem_t::CheckCode_C(int RunID)
 {
 	bool PassStatus = true;
 
@@ -87,8 +133,8 @@ bool JudgeSystem_t::CheckCode(int RunID)
 				ofstream out(CodePath);
 				if (out.is_open())
 				{
-					out << UnicodeToUTF8(L"检测到敏感词: ") << SensitiveStr[i].c_str() << endl;
-					out << UnicodeToUTF8(L"编译已终止，请删去敏感词再进行操作.");
+					out << "检测到敏感词: " << SensitiveStr[i].c_str() << endl;
+					out << "编译已终止，请删去敏感词再进行操作.";
 					out.close();
 				}
 
@@ -117,7 +163,7 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 
 		if (!strcmp(GettLanguage(), "Java"))
 		{
-			if (this->Compiler_JAVA(RunID))
+			if (this->CheckCode_Java(RunID) && this->Compiler_JAVA(RunID))
 			{
 				this->HaveCompile = true;
 				this->JudgeStatus = Running;
@@ -145,7 +191,7 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 		}
 		else
 		{
-			if (this->CheckCode(RunID) && this->Compiler_C(RunID))
+			if (this->CheckCode_C(RunID) && this->Compiler_C(RunID))
 			{
 				this->HaveCompile = true;
 				this->JudgeStatus = Running;
