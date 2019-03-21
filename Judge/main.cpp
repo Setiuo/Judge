@@ -17,7 +17,7 @@ using namespace std;
 struct FileData_t
 {
 	int RunID;
-	char Data[200];
+	char Data[500];
 
 public:
 	friend bool operator<(const FileData_t &a, const FileData_t &b)
@@ -110,10 +110,10 @@ void Judge(JudgeSystem_t &JudgeSystem, int RunID, const char *UserName, const ch
 //获取数据文件中的信息
 void FileToData(const char *FileData, char *Problem, int &MaxTime, int &MaxMemory, char *UserName, char *Lang, char *Test)
 {
-	char iData[200];
+	char iData[500];
 	strcpy_s(iData, FileData);
 
-	char *Context[100] = {};
+	char *Context[500] = {};
 	//语言
 	char *Data = strtok_s(iData, "|", Context);
 	strcpy_s(Lang, 100, Data);
@@ -131,7 +131,7 @@ void FileToData(const char *FileData, char *Problem, int &MaxTime, int &MaxMemor
 	MaxMemory = atoi(Data);
 	//测试点
 	Data = strtok_s(Context[0], "|", Context);
-	strcpy_s(Test, 100, Data);
+	strcpy_s(Test, 500, Data);
 }
 
 
@@ -153,9 +153,9 @@ void getFiles(const char *path, priority_queue<FileData_t> &files)
 				char FilePath[100];
 				sprintf_s(FilePath, "%s\\%s", path, fileinfo.name);
 
-				char buf[100];
+				char buf[500];
 				ifstream is(FilePath);
-				is.getline(buf, 200);
+				is.getline(buf, 500);
 				is.close();
 				remove(FilePath);
 
@@ -223,7 +223,7 @@ int main()
 			//语言
 			char Lang[100];
 			//测试点
-			char Test[100];
+			char Test[500];
 			//最大时间
 			int MaxTime;
 			//最大内存
