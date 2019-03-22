@@ -476,7 +476,7 @@ bool JudgeSystem_t::Compiler_C(int RunID)
 	sprintf_s(CodePath, "test\\%d\\Code.cpp", RunID);
 	//Ö´ĞĞµÄ±àÒëÃüÁî
 	char command[PathLen];
-	sprintf_s(command, "\"%s\\%s.exe\" \"%s\" -o \"test\\%d\\Test.exe\" -ansi -fno-asm -O2 -Wall -lm --static -DONLINE_JUDGE", CompilerPath, LanguageType, CodePath, RunID);
+	sprintf_s(command, "\"%s\" \"%s\" -o \"test\\%d\\Test.exe\" -ansi -fno-asm -O2 -Wall -lm --static -DONLINE_JUDGE", LanguageType, CodePath, RunID);
 
 	//×´Ì¬
 	this->status = Compiling;

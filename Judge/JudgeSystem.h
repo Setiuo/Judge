@@ -1,8 +1,6 @@
 #pragma once
 
 #define PathLen 200
-#define CompilerPath "D:\\Program Files (x86)\\CodeBlocks\\MinGW\\bin"
-#define JavaPath ""
 
 enum ProgramState
 {
