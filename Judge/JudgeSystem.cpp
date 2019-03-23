@@ -698,17 +698,17 @@ void JudgeSystem_t::Judge(int RunID, const char *Problem, int TestID, DWORD &exi
 		{
 			this->status = MemoryLimitExceeded;
 
-			if (this->JudgeStatus == Running)
+			if (this->JudgeStatus == Running || this->JudgeStatus == WrongAnswer)
 			{
 				this->JudgeStatus = MemoryLimitExceeded;
 			}
 		}
 
-		if (iTimeLimitExceeded && this->status == Running)
+		if (iTimeLimitExceeded && this->status != RuntimeError)
 		{
 			this->status = TimeLimitExceeded;
 
-			if (this->JudgeStatus == Running)
+			if (this->JudgeStatus == Running || this->JudgeStatus == WrongAnswer)
 			{
 				this->JudgeStatus = TimeLimitExceeded;
 			}
@@ -758,7 +758,7 @@ void JudgeSystem_t::Judge(int RunID, const char *Problem, int TestID, DWORD &exi
 		{
 			this->status = WrongAnswer;
 
-			if (this->JudgeStatus == Running || this->JudgeStatus == TimeLimitExceeded || this->JudgeStatus == PresentationError || this->JudgeStatus == MemoryLimitExceeded)
+			if (this->JudgeStatus == Running  || this->JudgeStatus == PresentationError)
 			{
 				this->JudgeStatus = WrongAnswer;
 			}
