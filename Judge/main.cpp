@@ -7,6 +7,7 @@
 #include <windows.h>
 #include <conio.h>
 #include <io.h>
+#include <time.h>
 
 #include <MySql.h>
 #include "Encode.h"
@@ -28,7 +29,14 @@ public:
 
 void Judge(JudgeSystem_t &JudgeSystem, int RunID, const char *UserName, const char *Problem, int MaxTime, int MaxMemory, const char *Lang, const char *Test)
 {
+	time_t tt = time(NULL);//这句返回的只是一个时间cuo
+	tm* t = new tm;
+	localtime_s(t, &tt);
+
 	fprintf(stdout, "运行ID:%-3d 用户:%-5s 题号:%4s 语言:%3s\n", RunID, UserName, Problem, Lang);
+	fprintf(stdout, "%d-%02d-%02d %02d:%02d:%02d\n",t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
+
+	delete t;
 
 	int TrueTime = 0;
 	int TrueMemory = 0;
