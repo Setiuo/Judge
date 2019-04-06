@@ -577,19 +577,6 @@ void JudgeSystem_t::Judge(int RunID, const char *Problem, int TestID, DWORD &exi
 	ZeroMemory(&sa, sizeof(sa));
 	sa.bInheritHandle = TRUE;
 
-	//输出文件路径
-	char OutPutPath[PathLen];
-	sprintf_s(OutPutPath, "./test/%d/Test%d.out", RunID, TestID);
-	//重定向std输出
-	HANDLE cmdOutput = CreateFile(OutPutPath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, &sa, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-
-	if (cmdOutput == INVALID_HANDLE_VALUE)
-	{
-		exitcode = 233;
-		this->status = RuntimeError;
-		return;
-		//ExitProcess(0);
-	}
 	//测试点输入路径
 	char PutPath[PathLen];
 	sprintf_s(PutPath, "./data/%s/%s_%d.in", Problem, Problem, TestID);
@@ -598,10 +585,26 @@ void JudgeSystem_t::Judge(int RunID, const char *Problem, int TestID, DWORD &exi
 
 	if (cmdInput == INVALID_HANDLE_VALUE)
 	{
-		exitcode = 233;
-		this->status = RuntimeError;
+		exitcode = 1;
+		this->status = SystemError;
+		this->JudgeStatus = SystemError;
+
+		printf("重定向std输入失败。原因可能为测试点文件不存在\n");
 		return;
-		//ExitProcess(0);
+	}
+
+	//输出文件路径
+	char OutPutPath[PathLen];
+	sprintf_s(OutPutPath, "./test/%d/Test%d.out", RunID, TestID);
+	//重定向std输出
+	HANDLE cmdOutput = CreateFile(OutPutPath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, &sa, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	if (cmdOutput == INVALID_HANDLE_VALUE)
+	{
+		exitcode = 1;
+		this->status = SystemError;
+		this->JudgeStatus = SystemError;
+		return;
 	}
 
 	si.hStdInput = cmdInput;
