@@ -761,7 +761,7 @@ void JudgeSystem_t::Judge(int RunID, const char *Problem, int TestID, DWORD &exi
 		{
 			this->status = WrongAnswer;
 
-			if (this->JudgeStatus == Running  || this->JudgeStatus == PresentationError)
+			if (this->JudgeStatus == Running  || this->JudgeStatus == PresentationError || this->JudgeStatus == OutputLimitExceeded)
 			{
 				this->JudgeStatus = WrongAnswer;
 			}
