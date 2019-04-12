@@ -6,6 +6,9 @@ extern void MySQL_Connect();
 //获取OJ名称
 extern char *MySQL_GetOJName();
 
+//设置评测机名称
+extern void MySQL_SetJudgerName(int RunID, const char *Name);
+
 //设置评测机运行状态
 extern void MySQL_SetOJState(int State);
 

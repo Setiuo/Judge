@@ -128,6 +128,32 @@ extern void MySQL_SetOJState(int State)
 	}
 }
 
+extern void MySQL_SetJudgerName(int RunID, const char *Name)
+{
+	try
+	{
+		static char cmd[100];
+#ifndef JUDGE_CONTEST
+		sprintf_s(cmd, "update oj_status set Judger=\"%s\" where RunID=%d", Name, RunID);
+#endif
+#ifdef JUDGE_CONTEST
+		sprintf_s(cmd, "update oj_constatus set Judger=\"%s\" where RunID=%d", Name, RunID);
+#endif
+		res = stmt->executeQuery(cmd);
+	}
+	catch (sql::SQLException &e)
+	{
+		if (e.getErrorCode() != 0)
+		{
+			cout << "SQLException in " << __FILE__;
+			cout << " (" << __FUNCTION__ << ") on line " << __LINE__ << endl;
+			cout << "" << e.what();
+			cout << " (MySQL error code: " << e.getErrorCode();
+			cout << " , SQLState: " << e.getSQLState() << " )" << endl;
+		}
+	}
+}
+
 extern void MySQL_ChangeStatus(int RunID, const char *Status)
 {
 	try

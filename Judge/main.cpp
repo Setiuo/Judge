@@ -15,6 +15,8 @@
 
 using namespace std;
 
+char *FileDP;
+
 struct FileData_t
 {
 	int RunID;
@@ -41,6 +43,20 @@ void Judge(JudgeSystem_t &JudgeSystem, int RunID, const char *UserName, const ch
 	int TrueTime = 0;
 	int TrueMemory = 0;
 	MySQL_SetOJAllRun();
+
+	char *buf_file[100] = {};
+	printf("评测机文件路径：%s\n", FileDP);
+	char *FileName = strrchr(FileDP, '\\') + 1;
+	FileName = strtok_s(FileName, ".", buf_file);
+	printf("评测机：%s\n", FileName);
+
+#ifndef JUDGE_CONTEST
+	MySQL_SetJudgerName(RunID, FileName);
+#endif
+#ifdef JUDGE_CONTEST
+	MySQL_SetJudgerName(RunID, FileName);
+#endif
+
 	//对程序进行评测
 	JudgeSystem.Remark();
 	JudgeSystem.SetLanguage(Lang);
@@ -189,8 +205,10 @@ BOOL WINAPI CloseJudge(DWORD dwCtrlType)
 	return TRUE;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+	FileDP = argv[0];
+
 	JudgeSystem_t JudgeSystem;
 	char filePath[100];
 #ifndef JUDGE_CONTEST
