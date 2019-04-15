@@ -44,18 +44,15 @@ void Judge(JudgeSystem_t &JudgeSystem, int RunID, const char *UserName, const ch
 	int TrueMemory = 0;
 	MySQL_SetOJAllRun();
 
-	char *buf_file[100] = {};
+	char Name_Copy[100];
 	printf("评测机文件路径：%s\n", FileDP);
 	char *FileName = strrchr(FileDP, '\\') + 1;
-	FileName = strtok_s(FileName, ".", buf_file);
-	printf("评测机：%s\n", FileName);
+	strcpy_s(Name_Copy, FileName);
+	int FileLen = strlen(Name_Copy);
+	Name_Copy[FileLen - 4] = '\0';
+	printf("评测机：%s\n", Name_Copy);
 
-#ifndef JUDGE_CONTEST
-	MySQL_SetJudgerName(RunID, FileName);
-#endif
-#ifdef JUDGE_CONTEST
-	MySQL_SetJudgerName(RunID, FileName);
-#endif
+	MySQL_SetJudgerName(RunID, Name_Copy);
 
 	//对程序进行评测
 	JudgeSystem.Remark();
