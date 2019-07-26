@@ -342,6 +342,16 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 	return this->status;
 }
 
+void RemoveStringBlank(string &Str)
+{
+	if (!Str.empty())
+	{
+		Str.erase(0, Str.find_first_not_of(" "));
+		Str.erase(Str.find_last_not_of(" ") + 1);
+	}
+}
+
+
 //AC½á¹ûÆÀ²â
 bool JudgeSystem_t::AcceptedTest(const char* program, const char* tester)
 {
@@ -350,25 +360,38 @@ bool JudgeSystem_t::AcceptedTest(const char* program, const char* tester)
 
 	bool Res = true;
 
-	char buf1[1000];
-	char buf2[1000];
+	string buf1;
+	string buf2;
 
-	while (is2.getline(buf2, 1000))
+	while (getline(is2, buf2))
 	{
-		if (!is1.getline(buf1, 1000))
+		//if (isRemoveBlank)
+		{
+			RemoveStringBlank(buf2);
+
+			if (buf2 == "")
+				continue;
+		}
+
+		if (!getline(is1, buf1))
 		{
 			Res = false;
 			break;
 		}
 
-		if (strcmp(buf1, buf2) != 0)
+		//if (isRemoveBlank)
+		{
+			RemoveStringBlank(buf1);
+		}
+
+		if (buf1 != buf2)
 		{
 			Res = false;
 			break;
 		}
 	}
 
-	if (is1.getline(buf1, 1000))
+	if (getline(is1, buf1))
 	{
 		Res = false;
 	}
@@ -883,3 +906,4 @@ long JudgeSystem_t::GetCodeLen()
 {
 	return this->CodeLen;
 }
+
