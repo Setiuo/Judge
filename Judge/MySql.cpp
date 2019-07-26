@@ -23,7 +23,7 @@ extern void MySQL_Connect()
 	try
 	{
 		driver = get_driver_instance();
-		con = driver->connect("tcp://127.0.0.1", "root", "ieIAjVBw02");
+		con = driver->connect("tcp://127.0.0.1", "root", "SqlPassWord");
 		con->setSchema("openjudge");
 
 		stmt = con->createStatement();
