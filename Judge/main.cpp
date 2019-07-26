@@ -48,9 +48,9 @@ void Judge(JudgeSystem_t &JudgeSystem, int RunID, const char *UserName, const ch
 	printf("评测机文件路径：%s\n", FileDP);
 	char *FileName = strrchr(FileDP, '\\') + 1;
 	strcpy_s(Name_Copy, FileName);
-	int FileLen = strlen(Name_Copy);
+	int FileLen = (int)strlen(Name_Copy);
 	Name_Copy[FileLen - 4] = '\0';
-	printf("评测机：%s\n", Name_Copy);
+	printf("评测机：%s\n\n", Name_Copy);
 
 	MySQL_SetJudgerName(RunID, Name_Copy);
 
@@ -69,6 +69,7 @@ void Judge(JudgeSystem_t &JudgeSystem, int RunID, const char *UserName, const ch
 	while (str)
 	{
 		int i = atoi(str);
+		fprintf(stdout, "#测试点%2d  开始评测\n", i);
 
 		DWORD exitcode = 0;
 		int Time;
@@ -94,7 +95,7 @@ void Judge(JudgeSystem_t &JudgeSystem, int RunID, const char *UserName, const ch
 		sprintf_s(iStatusStr, "%d&%d&%d&%d&0x%x|", i, flag, Time, Memory, exitcode);
 		strcat_s(AllStatus, iStatusStr);
 
-		fprintf(stdout, "#测试点%2d: %-18s 耗时：%-4d 退出码为0x%x\n", i, ProgramStateStr[flag], Time, exitcode);
+		fprintf(stdout, "#测试点%2d: %-18s 耗时：%-4d 退出码为0x%x\n\n", i, ProgramStateStr[flag], Time, exitcode);
 
 		JudgeSystem.ContinueJudge();
 
@@ -116,12 +117,12 @@ void Judge(JudgeSystem_t &JudgeSystem, int RunID, const char *UserName, const ch
 	if (JudgeRes == Running)
 	{
 		fprintf(stdout, "Accepted, 耗时：%d, 代码长度:%d\n\n", TrueTime, JudgeSystem.GetCodeLen());
-		MySQL_ChangeStatus(RunID, ProgramStateStr[Accepted]);
+		MySQL_ChangeStatus(RunID, Accepted);
 	}
 	else
 	{
 		fprintf(stdout, "%s, 耗时：%d, 代码长度:%d\n\n", ProgramStateStr[JudgeRes], TrueTime, JudgeSystem.GetCodeLen());
-		MySQL_ChangeStatus(RunID, ProgramStateStr[JudgeRes]);
+		MySQL_ChangeStatus(RunID, JudgeRes);
 	}
 
 	Sleep(1000);
@@ -129,12 +130,12 @@ void Judge(JudgeSystem_t &JudgeSystem, int RunID, const char *UserName, const ch
 }
 
 //获取数据文件中的信息
-void FileToData(const char *FileData, char *Problem, int &MaxTime, int &MaxMemory, char *UserName, char *Lang, char *Test)
+void FileToData(const char *FileData, int &JudgeType, char *Problem, int &MaxTime, int &MaxMemory, char *UserName, char *Lang, char *Test)
 {
-	char iData[500];
+	char iData[200];
 	strcpy_s(iData, FileData);
 
-	char *Context[500] = {};
+	char *Context[1000] = {};
 	//语言
 	char *Data = strtok_s(iData, "|", Context);
 	strcpy_s(Lang, 100, Data);
@@ -144,6 +145,9 @@ void FileToData(const char *FileData, char *Problem, int &MaxTime, int &MaxMemor
 	//题号
 	Data = strtok_s(Context[0], "|", Context);
 	strcpy_s(Problem, 100, Data);
+	//评测模式
+	Data = strtok_s(Context[0], "|", Context);
+	JudgeType = atoi(Data);
 	//最大时间
 	Data = strtok_s(Context[0], "|", Context);
 	MaxTime = atoi(Data);
@@ -152,7 +156,7 @@ void FileToData(const char *FileData, char *Problem, int &MaxTime, int &MaxMemor
 	MaxMemory = atoi(Data);
 	//测试点
 	Data = strtok_s(Context[0], "|", Context);
-	strcpy_s(Test, 500, Data);
+	strcpy_s(Test, 1000, Data);
 }
 
 
@@ -186,7 +190,7 @@ void getFiles(const char *path, priority_queue<FileData_t> &files)
 
 				files.push(item);
 
-				MySQL_ChangeStatus(item.RunID, ProgramStateStr[Queuing]);
+				MySQL_ChangeStatus(item.RunID, Queuing);
 			}
 		} while (_findnext(hFile, &fileinfo) == 0);
 
@@ -251,23 +255,29 @@ int main(int argc, char *argv[])
 			int MaxTime;
 			//最大内存
 			int MaxMemory;
-			FileToData(coData.top().Data, Problem, MaxTime, MaxMemory, UserName, Lang, Test);
+			//评测模式
+			int JudgeType;
+
+			FileToData(coData.top().Data, JudgeType, Problem, MaxTime, MaxMemory, UserName, Lang, Test);
 
 
 			char Path1[100], Path2[100];
+			sprintf_s(Path1, "Temporary_Code\\%d", RunID);
+
 			if (!strcmp(Lang, "Java"))
 			{
-				sprintf_s(Path1, "Temporary_Code\\%d", RunID);
 				sprintf_s(Path2, "test\\%d\\Main.java", RunID);
 			}
 			else if (!strcmp(Lang, "Python"))
 			{
-				sprintf_s(Path1, "Temporary_Code\\%d", RunID);
 				sprintf_s(Path2, "test\\%d\\Code.py", RunID);
+			}
+			else if (!strcmp(Lang, "Gcc"))
+			{
+				sprintf_s(Path2, "test\\%d\\Code.c", RunID);
 			}
 			else
 			{
-				sprintf_s(Path1, "Temporary_Code\\%d", RunID);
 				sprintf_s(Path2, "test\\%d\\Code.cpp", RunID);
 			}
 

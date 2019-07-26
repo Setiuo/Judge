@@ -19,7 +19,7 @@ extern void MySQL_SetOJAllRun();
 extern int MySQL_GetOJAllRun();
 
 //设置数据库评测结果
-extern void MySQL_ChangeStatus(int RunID, const char *Status);
+extern void MySQL_ChangeStatus(int RunID, const int Status);
 
 //设置数据库题的每个测试点的评测状态，包括时间内存等
 extern void MySQL_SetAllStatus(int RunID, const char *Status);

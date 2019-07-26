@@ -9,6 +9,8 @@
 #include <time.h>
 #include <Psapi.h>
 
+#include <regex>
+
 #include "JudgeSystem.h"
 #include "MySql.h"
 #include "Encode.h"
@@ -18,7 +20,7 @@ using namespace std;
 JudgeSystem_t::JudgeSystem_t()
 {
 	this->CodeLen = 0;
-	strcpy_s(this->LanguageType, "g++");
+	strcpy_s(this->LanguageType, "G++");
 	this->status = Queuing;
 	this->JudgeStatus = Queuing;
 	this->HaveCompile = false;
@@ -154,33 +156,51 @@ bool JudgeSystem_t::CheckCode_Java(int RunID)
 
 bool JudgeSystem_t::CheckCode_C(int RunID)
 {
-	bool PassStatus = true;
-
 	char CodePath[PathLen];
 	sprintf_s(CodePath, "test\\%d\\Code.cpp", RunID);
-	const string SensitiveStr[] = {"GetCurrentProcess", "system", "ExitWindowsEx", "fopen", "ifstream", "WinExec", "ShellExecute", "WSAStartup", "ShellExecuteEx", "CreateProcess", "CreateThread", "OpenProcess", "CloseHandle", "ShellExecuteW", "ShellExecuteA", "remove", "DeleteFileW", "DeleteFileA", "CreateFileW", "CreateFileA","DeleteFile", "CreateDirectory", "MessageBox" , "MessageBoxA", "MessageBoxW", "accept", "socket", "GetCurrentProcessId", "TerminateProcess"};
-	int SensitiveStrNum = sizeof(SensitiveStr) / sizeof(SensitiveStr[0]);
-	string Code;
 
 	ifstream infile;
-	infile.open(CodePath); 
+	infile.open(CodePath);
 	string Str;
+
+	const string SensitiveStr[] = { ".*windows.*", ".*system.*", ".*ExitWindowsEx.*", ".*fopen.*", ".*ifstream.*",
+		".*WinExec.*", ".*ShellExecute.*", ".*ShellExecuteEx.*", ".*CreateProcess.*", ".*thread.*",
+		".*OpenProcess.*", ".*CloseHandle.*", ".*remove.*", ".*DeleteFile.*", ".*CreateDirectory.*",
+		".*__stdcall.*", ".*GetProcAddress.*", ".*LoadLibrary.*", ".*RemoveDirectory.*" };
+
+	int SensitiveStrNum = sizeof(SensitiveStr) / sizeof(SensitiveStr[0]);
+
+	bool Find = false;
 
 	while (getline(infile, Str))
 	{
+
 		for (int i = 0; i < SensitiveStrNum; i++)
 		{
-			if (Str.find(SensitiveStr[i]) != string::npos)
+			regex reg(SensitiveStr[i], regex_constants::icase);
+			bool bValid = regex_match(Str, reg);
+
+			if (bValid)
 			{
-				PassStatus = false;
-				this->status = CompileError;
+				printf("检测到关键字，已停止编译\n");
+				Find = true;
 
 				sprintf_s(CodePath, "Temporary_Error\\%d.log", RunID);
 				ofstream out(CodePath);
 				if (out.is_open())
 				{
-					out << "检测到敏感词: " << SensitiveStr[i].c_str() << endl;
-					out << "编译已终止，请删去敏感词再进行操作.";
+					string iSensitiveStr = SensitiveStr[i];
+
+					string noWord = ".*";
+					size_t pos = iSensitiveStr.find(noWord);
+					while (pos != -1)
+					{
+						iSensitiveStr.replace(pos, noWord.length(), "");
+						pos = iSensitiveStr.find(noWord);
+					}
+
+					out << UnicodeToANSI(L"检测到敏感词: ") << iSensitiveStr.c_str() << endl;
+					out << UnicodeToANSI(L"编译已终止，请删去敏感词再进行操作.");
 					out.close();
 				}
 
@@ -188,22 +208,65 @@ bool JudgeSystem_t::CheckCode_C(int RunID)
 			}
 		}
 
-		if (!PassStatus)
-		{
+		if (Find)
 			break;
-		}
 	}
-	infile.close();
 
-	return PassStatus;
+	return !Find;
 }
+
+//bool JudgeSystem_t::CheckCode_C(int RunID)
+//{
+//	bool PassStatus = true;
+//
+//	char CodePath[PathLen];
+//	sprintf_s(CodePath, "test\\%d\\Code.cpp", RunID);
+//	const string SensitiveStr[] = {"GetCurrentProcess", "system", "ExitWindowsEx", "fopen", "ifstream", "WinExec", "ShellExecute", "WSAStartup", "ShellExecuteEx", "CreateProcess", "CreateThread", "OpenProcess", "CloseHandle", "ShellExecuteW", "ShellExecuteA", "remove", "DeleteFileW", "DeleteFileA", "CreateFileW", "CreateFileA","DeleteFile", "CreateDirectory", "MessageBox" , "MessageBoxA", "MessageBoxW", "accept", "socket", "GetCurrentProcessId", "TerminateProcess"};
+//	int SensitiveStrNum = sizeof(SensitiveStr) / sizeof(SensitiveStr[0]);
+//	string Code;
+//
+//	ifstream infile;
+//	infile.open(CodePath); 
+//	string Str;
+//
+//	while (getline(infile, Str))
+//	{
+//		for (int i = 0; i < SensitiveStrNum; i++)
+//		{
+//			if (Str.find(SensitiveStr[i]) != string::npos)
+//			{
+//				PassStatus = false;
+//				this->status = CompileError;
+//
+//				sprintf_s(CodePath, "Temporary_Error\\%d.log", RunID);
+//				ofstream out(CodePath);
+//				if (out.is_open())
+//				{
+//					out << "检测到敏感词: " << SensitiveStr[i].c_str() << endl;
+//					out << "编译已终止，请删去敏感词再进行操作.";
+//					out.close();
+//				}
+//
+//				break;
+//			}
+//		}
+//
+//		if (!PassStatus)
+//		{
+//			break;
+//		}
+//	}
+//	infile.close();
+//
+//	return PassStatus;
+//}
 int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD &exitcode, int &Time, int &Memory)
 {
 
 	if (!this->HaveCompile)
 	{
 		this->JudgeStatus = Compiling;
-		MySQL_ChangeStatus(RunID, ProgramStateStr[Compiling]);
+		MySQL_ChangeStatus(RunID, Compiling);
 
 		this->CreateDir(RunID);
 
@@ -213,7 +276,7 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 			{
 				this->HaveCompile = true;
 				this->JudgeStatus = Running;
-				MySQL_ChangeStatus(RunID, ProgramStateStr[Running]);
+				MySQL_ChangeStatus(RunID, Running);
 			}
 			else
 			{
@@ -222,7 +285,7 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 				if (this->JudgeStatus == Compiling)
 				{
 					this->JudgeStatus = CompileError;
-					MySQL_ChangeStatus(RunID, ProgramStateStr[CompileError]);
+					MySQL_ChangeStatus(RunID, CompileError);
 				}
 
 			}
@@ -235,7 +298,7 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 				this->status = Running;
 				this->JudgeStatus = Running;
 
-				MySQL_ChangeStatus(RunID, ProgramStateStr[Running]);
+				MySQL_ChangeStatus(RunID, Running);
 			}
 			else
 			{
@@ -244,7 +307,7 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 				if (this->JudgeStatus == Compiling)
 				{
 					this->JudgeStatus = CompileError;
-					MySQL_ChangeStatus(RunID, ProgramStateStr[CompileError]);
+					MySQL_ChangeStatus(RunID, CompileError);
 				}
 
 			}
@@ -255,7 +318,7 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 			{
 				this->HaveCompile = true;
 				this->JudgeStatus = Running;
-				MySQL_ChangeStatus(RunID, ProgramStateStr[Running]);
+				MySQL_ChangeStatus(RunID, Running);
 			}
 			else
 			{
@@ -264,7 +327,7 @@ int JudgeSystem_t::StartJudge(int RunID, const char *Problem, int TestID, DWORD 
 				if (this->JudgeStatus == Compiling)
 				{
 					this->JudgeStatus = CompileError;
-					MySQL_ChangeStatus(RunID, ProgramStateStr[CompileError]);
+					MySQL_ChangeStatus(RunID, CompileError);
 				}
 
 			}
@@ -402,7 +465,7 @@ bool JudgeSystem_t::Compiler_JAVA(int RunID)
 	sprintf_s(CodePath, "test\\%d\\Main.java", RunID);
 	//执行的编译命令
 	char command[PathLen];
-	sprintf_s(command, "javac \"test\\%d\\Main.java\"", RunID);
+	sprintf_s(command, "javac -J-Xms32m -J-Xmx256m \"test\\%d\\Main.java\"", RunID);
 
 	//状态
 	this->status = Compiling;
@@ -473,10 +536,19 @@ bool JudgeSystem_t::Compiler_C(int RunID)
 	HANDLE cmdError = CreateFile(PutPath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, &sa, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	char CodePath[PathLen];
-	sprintf_s(CodePath, "test\\%d\\Code.cpp", RunID);
+
+	if(!strcmp(GettLanguage(), "Gcc"))
+		sprintf_s(CodePath, "test\\%d\\Code.c", RunID);
+	else
+		sprintf_s(CodePath, "test\\%d\\Code.cpp", RunID);
+
 	//执行的编译命令
 	char command[PathLen];
-	sprintf_s(command, "\"%s\" \"%s\" -o \"test\\%d\\Test.exe\" -ansi -fno-asm -O2 -Wall -lm --static -DONLINE_JUDGE", LanguageType, CodePath, RunID);
+
+	if (!strcmp(GettLanguage(), "Gcc"))
+		sprintf_s(command, "\"%s\" \"%s\" -o \"test\\%d\\Test.exe\" -O -Wall -lm --static -std=c99 -DONLINE_JUDGE", LanguageType, CodePath, RunID);
+	else
+		sprintf_s(command, "\"%s\" \"%s\" -o \"test\\%d\\Test.exe\" -O -Wall -lm --static -DONLINE_JUDGE", LanguageType, CodePath, RunID);
 
 	//状态
 	this->status = Compiling;
@@ -567,6 +639,8 @@ void JudgeSystem_t::SetLimitMemory(int MaxMemory)
 //评测
 void JudgeSystem_t::Judge(int RunID, const char *Problem, int TestID, DWORD &exitcode, int &Time, int &Memory)
 {
+	SetErrorMode(SEM_NOGPFAULTERRORBOX);
+
 	PROCESS_INFORMATION pi;
 	ZeroMemory(&pi, sizeof(pi));
 	STARTUPINFO si;
@@ -659,10 +733,9 @@ void JudgeSystem_t::Judge(int RunID, const char *Problem, int TestID, DWORD &exi
 				
 				break;
 			}
-			printf("程序发生异常，正在重测...\n");
+			printf("程序发生异常,进程返回值为 0x%x(%d)，正在重测...\n", WaitType, WaitType);
 		}
-		//等待进程结束
-		//WaitForSingleObject(pi.hProcess, MaxTime);
+
 		GetExitCodeProcess(pi.hProcess, &exitcode);
 
 
@@ -671,11 +744,24 @@ void JudgeSystem_t::Judge(int RunID, const char *Problem, int TestID, DWORD &exi
 		info.cb = sizeof(info);
 
 		GetProcessMemoryInfo(pi.hProcess, (PROCESS_MEMORY_COUNTERS*)&info, sizeof(info));
-		Memory = (int)info.PeakWorkingSetSize / 1024;
 
+		if(!strcmp(GettLanguage(), "Java"))
+			Memory = (int)info.PeakWorkingSetSize / 1024;
+		else
+			Memory = (int)info.PeakPagefileUsage / 1024;
+
+		printf("	Memory: PeakWorkingSetSize:%d\n", (int)info.PeakWorkingSetSize / 1024);
+		printf("	Memory: PeakPagefileUsage: %d\n", (int)info.PeakPagefileUsage / 1024);
+		printf("	Memory: WorkingSetSize:    %d\n", (int)info.WorkingSetSize / 1024);
+
+		/*if (exitcode != 0)
+		{
+			this->status = RuntimeError;
+			this->JudgeStatus = RuntimeError;
+		}*/
 		switch (exitcode)
 		{
-		case 1:
+		case 0x1:
 		case EXCEPTION_INT_DIVIDE_BY_ZERO:		//整数除法的除数是0时引发该异常。
 		case EXCEPTION_INT_OVERFLOW:			//整数操作的结果溢出时引发该异常。
 		case EXCEPTION_ACCESS_VIOLATION:		//程序企图读写一个不可访问的地址时引发的异常。例如企图读取0地址处的内存。
@@ -691,21 +777,10 @@ void JudgeSystem_t::Judge(int RunID, const char *Problem, int TestID, DWORD &exi
 		default:
 			break;
 		}
-
 		
 		TerminateThread(pi.hThread, 0);
 		TerminateProcess(pi.hProcess, 0);
 		TerminateJobObject(pi.hProcess, 0);
-
-		if (Memory > MaxMemory && this->status != RuntimeError)
-		{
-			this->status = MemoryLimitExceeded;
-
-			if (this->JudgeStatus == Running || this->JudgeStatus == WrongAnswer)
-			{
-				this->JudgeStatus = MemoryLimitExceeded;
-			}
-		}
 
 		if (iTimeLimitExceeded && this->status != RuntimeError)
 		{
@@ -717,6 +792,16 @@ void JudgeSystem_t::Judge(int RunID, const char *Problem, int TestID, DWORD &exi
 			}
 		}
 
+		if (Memory > MaxMemory && this->status != RuntimeError)
+		{
+			this->status = MemoryLimitExceeded;
+
+			if (this->JudgeStatus == Running || this->JudgeStatus == WrongAnswer || this->JudgeStatus == TimeLimitExceeded)
+			{
+				this->JudgeStatus = MemoryLimitExceeded;
+			}
+		}
+
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
 	}
@@ -724,7 +809,7 @@ void JudgeSystem_t::Judge(int RunID, const char *Problem, int TestID, DWORD &exi
 	{
 		this->status = SystemError;
 		this->JudgeStatus = SystemError;
-		MySQL_ChangeStatus(RunID, ProgramStateStr[SystemError]);
+		MySQL_ChangeStatus(RunID, SystemError);
 	}
 
 	CloseHandle(cmdOutput);

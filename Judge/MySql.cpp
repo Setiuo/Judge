@@ -154,16 +154,16 @@ extern void MySQL_SetJudgerName(int RunID, const char *Name)
 	}
 }
 
-extern void MySQL_ChangeStatus(int RunID, const char *Status)
+extern void MySQL_ChangeStatus(int RunID, const int Status)
 {
 	try
 	{
 		static char cmd[100];
 #ifndef JUDGE_CONTEST
-		sprintf_s(cmd, "update oj_status set status=\"%s\" where RunID=%d", Status, RunID);
+		sprintf_s(cmd, "update oj_status set status=%d where RunID=%d", Status, RunID);
 #endif
 #ifdef JUDGE_CONTEST
-		sprintf_s(cmd, "update oj_constatus set status=\"%s\" where RunID=%d", Status, RunID);
+		sprintf_s(cmd, "update oj_constatus set status=%d where RunID=%d", Status, RunID);
 #endif
 		res = stmt->executeQuery(cmd);
 	}
